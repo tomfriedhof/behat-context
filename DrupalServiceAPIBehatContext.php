@@ -318,4 +318,22 @@ class DrupalServiceAPIBehatContext extends DrupalContext
         }
     }
 
+    /**
+     * @Then /^property "([^"]*)" should have less than "([^"]*)" children$/
+     *
+     * @param string $property_string
+     *   A property name or path to the property. Path the property can be
+     *   constructed with forward slashes '/' as the delimiters.
+     * @param int $number
+     *   Number of array elements the property should have less than.
+     */
+    public function propertyShouldHaveLessThanChildren($property_string, $number)
+    {
+        $property_value = $this->getProperty($property_string);
+        $property_count = count((array) $property_value);
+        if ($property_count >= $number) {
+            throw new Exception("Wrong number of elements found for {$property_string}: {$property_count}");
+        }
+    }
+
 }
