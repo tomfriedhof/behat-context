@@ -11,6 +11,8 @@ use Behat\Behat\Context\ClosuredContextInterface,
 use Behat\Gherkin\Node\PyStringNode,
     Behat\Gherkin\Node\TableNode;
 
+require_once('BaseFormatter.php');
+
 class BaseContext extends BehatContext {
 
     // Parameters contained in the YML file.
