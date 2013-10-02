@@ -60,7 +60,8 @@ class DrupalServiceAPIBehatContext extends DrupalContext
      *
      * @param string $property_string
      *   A property name or path to the property. Path the property can be
-     *   constructed with forward slashes '/' as the delimiters.
+     *   constructed with forward slashes '/' as the delimiters. Property
+     *   names may contain regular expression matches.
      *
      * @return bool|null
      *   TRUE if the property exists, FALSE if it does not, NULL on error.
@@ -77,6 +78,39 @@ class DrupalServiceAPIBehatContext extends DrupalContext
             }
             if (isset($response->$property)) {
                 $response = $response->$property;
+            }
+        }
+
+        return $exists;
+    }
+
+    /**
+     * Determine if a property exists or not.
+     *
+     * @param string $property_string
+     *   A property name or path to the property. Path the property can be
+     *   constructed with forward slashes '/' as the delimiters.
+     *
+     * @return bool|null
+     *   TRUE if the property exists, FALSE if it does not, NULL on error.
+     */
+    private function propertyMatchExistsJson($property_string) {
+        $exists = NULL;
+        $properties = explode('/', $property_string);
+        $response = $this->apiResponseArray;
+
+        while($property = array_shift($properties)) {
+            $exists = FALSE;
+            if (preg_match("/{$property}/", $response)) {
+                $exists = TRUE;   
+            }
+            $keys = array_keys(get_object_vars($response));
+            foreach($keys as $key) {
+                if (preg_match("/{$property}/", $key)) {
+                    $exists = TRUE;
+                    $response = $response->$key;
+                    break;
+                }
             }
         }
 
@@ -123,6 +157,31 @@ class DrupalServiceAPIBehatContext extends DrupalContext
         switch($this->apiResponseType) {
             case 'json':
                 $exists = $this->propertyExistsJson($property_string);
+                break;
+        }
+
+        return $exists;
+    }
+
+    /**
+     * Manages which property exist() should be invoked depending on what type
+     * of data was returned from the api request.
+     *
+     * @param string $property_string
+     *   A property name or path to the property. Path the property can be
+     *   constructed with forward slashes '/' as the delimiters. Property
+     *   names may contain regular expression matches.
+     *
+     * @return bool|null
+     *   Returns TRUE if the property exists, FALSE if it does not, NULL on
+     *   error.
+     */
+    private function propertyMatchExists($property_string) {
+        $exists = NULL;
+
+        switch($this->apiResponseType) {
+            case 'json':
+                $exists = $this->propertyMatchExistsJson($property_string);
                 break;
         }
 
@@ -180,6 +239,21 @@ class DrupalServiceAPIBehatContext extends DrupalContext
     public function propertyShouldExist($property_string)
     {
         if (!$this->propertyExists($property_string)) {
+            throw new Exception("Property {$property_string} does not exist");
+        }
+    }
+
+    /**
+     * @Then /^property match "([^"]*)" should exist$/
+     *
+     * @param string $property_string
+     *   A property name or path to the property. Path the property can be
+     *   constructed with forward slashes '/' as the delimiters. Property
+     *   names may contain regular expression matches.
+     */
+    public function propertyMatchShouldExist($property_string)
+    {
+        if (!$this->propertyMatchExists($property_string)) {
             throw new Exception("Property {$property_string} does not exist");
         }
     }
