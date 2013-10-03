@@ -55,10 +55,10 @@ class DrupalServiceAPIBehatContext extends DrupalContext
         while($property = array_shift($properties)) {
             $property = ($regex) ? "^{$property}$" : preg_quote($property);
             $value = NULL;
-            $keys = array_keys(get_object_vars($response));
+            $keys = array_keys($response);
             foreach($keys as $key) {
                 if (preg_match("/{$property}/", $key)) {
-                    $response = $response->$key;
+                    $response = $response[$key];
                     $value = $response;
                     break;
                 }
@@ -102,6 +102,18 @@ class DrupalServiceAPIBehatContext extends DrupalContext
         return $exists;
     }
 
+    public function objectToArray($obj) {
+        if(is_object($obj)) $obj = (array) $obj;
+        if(is_array($obj)) {
+            $new = array();
+            foreach($obj as $key => $val) {
+                $new[$key] = $this->objectToArray($val);
+            }
+        }
+        else $new = $obj;
+        return $new;       
+    }
+
     /**
      * @Given /^I call "([^"]*)" as "([^"]*)"$/
      *
@@ -124,7 +136,7 @@ class DrupalServiceAPIBehatContext extends DrupalContext
         }
         if ($format == 'json') {
             $this->apiResponseType = 'json';
-            $this->apiResponseArray = json_decode($this->apiResponse);
+            $this->apiResponseArray = $this->objectToArray(json_decode($this->apiResponse));
         }
     }
 
@@ -326,6 +338,22 @@ class DrupalServiceAPIBehatContext extends DrupalContext
         $property_count = count((array) $property_value);
         if ($property_count >= $number) {
             throw new Exception("Wrong number of elements found for {$property_string}: {$property_count}");
+        }
+    }
+
+    /**
+     * @Then /^property "([^"]*)" should be recursive parameter "([^"]*)"$/
+     */
+    public function propertyShouldBeRecursiveParameter($property_string, $parameter_string)
+    {
+        $properties = $this->getProperty($property_string);
+        $parameters = $this->getParameter($parameter_string);
+        $properties_serial = serialize($properties);
+        $parameters_serial = serialize($parameters);
+        if ($properties_serial != $parameters_serial) {
+            $this->printDebug($properties_serial);
+            $this->printDebug($parameters_serial);
+            throw new Exception("Recursive keys or values do not match");
         }
     }
 
