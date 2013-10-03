@@ -101,7 +101,7 @@ class DrupalServiceAPIBehatContext extends DrupalContext
 
         while($property = array_shift($properties)) {
             $exists = FALSE;
-            if (preg_match("/{$property}/", $response)) {
+            if (!is_object($response) && preg_match("/{$property}/", $response)) {
                 $exists = TRUE;   
             }
             $keys = array_keys(get_object_vars($response));
