@@ -196,11 +196,15 @@ class DrupalServiceAPIBehatContext extends DrupalContext
      * @param string $format
      *   The format that the API should return the response in. Only 'json' is
      *   currently supported.
+     * @param string $append
+     *   Any string that should be appended to the GET request.
      */
-    public function iCallAs($path, $format)
+    public function iCallAs($path, $format, $append = '')
     {
         // @todo probably want to use CURL so we can examine response headers.
-        $this->apiResponse = file_get_contents($this->parameters['base_url'] . $path . ".$format");
+        $url = $this->parameters['base_url'] . $path . ".{$format}{$append}";
+ 
+        $this->apiResponse = file_get_contents($url);
         if (!strlen($this->apiResponse)) {
             throw new Exception("Could not open $path");
         }
