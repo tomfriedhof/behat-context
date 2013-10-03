@@ -53,11 +53,7 @@ class DrupalServiceAPIBehatContext extends DrupalContext
         $response = $this->apiResponseArray;
 
         while($property = array_shift($properties)) {
-            if ($regex) {
-                $property = "^{$property}$";
-            } else {
-                $property = preg_quote($property);
-            }
+            $property = ($regex) ? "^{$property}$" : preg_quote($property);
             $value = NULL;
             $keys = array_keys(get_object_vars($response));
             foreach($keys as $key) {
@@ -92,11 +88,7 @@ class DrupalServiceAPIBehatContext extends DrupalContext
 
         while($property = array_shift($properties)) {
             $exists = FALSE;
-            if ($regex) {
-                $property = "^{$property}$";
-            } else {
-                $property = preg_quote($property);
-            }
+            $property = ($regex) ? "^{$property}$" : preg_quote($property);
             $keys = array_keys(get_object_vars($response));
             foreach($keys as $key) {
                 if (preg_match("/{$property}/", $key)) {
@@ -134,6 +126,22 @@ class DrupalServiceAPIBehatContext extends DrupalContext
             $this->apiResponseType = 'json';
             $this->apiResponseArray = json_decode($this->apiResponse);
         }
+    }
+
+    /**
+     * @Given /^I call "([^"]*)" as "([^"]*)" with "([^"]*)"$/
+     *
+     * @param string $path
+     *   The relative url path to access.
+     * @param string $format
+     *   The format that the API should return the response in. Only 'json' is
+     *   currently supported.
+     * @param string $append
+     *   Any string that should be appended to the GET request.
+     */
+    public function iCallAsWith($path, $format, $append)
+    {
+        $this->iCallAs($path, $format, $append);
     }
 
     /**
