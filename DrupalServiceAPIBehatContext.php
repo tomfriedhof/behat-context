@@ -89,10 +89,10 @@ class DrupalServiceAPIBehatContext extends DrupalContext
         while($property = array_shift($properties)) {
             $exists = FALSE;
             $property = ($regex) ? "^{$property}$" : preg_quote($property);
-            $keys = array_keys(get_object_vars($response));
+            $keys = array_keys($response);
             foreach($keys as $key) {
                 if (preg_match("/{$property}/", $key)) {
-                    $response = $response->$key;
+                    $response = $response[$key];
                     $exists = TRUE;
                     break;
                 }
@@ -130,7 +130,7 @@ class DrupalServiceAPIBehatContext extends DrupalContext
         // @todo probably want to use CURL so we can examine response headers.
         $url = $this->parameters['base_url'] . $path . ".{$format}{$append}";
  
-        $this->apiResponse = file_get_contents($url);
+        $this->apiResponse = @file_get_contents($url);
         if (!strlen($this->apiResponse)) {
             throw new Exception("Could not open $path");
         }
