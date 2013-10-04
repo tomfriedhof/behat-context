@@ -63,6 +63,10 @@ class DrupalServiceAPIBehatContext extends DrupalContext
                     break;
                 }
             }
+        } 
+        // If property_string is empty then just return the entire array.
+        if (!$property_string || !strlen($property_string)) {
+            $value = $this->apiResponseArray;
         }
 
         return $value;
