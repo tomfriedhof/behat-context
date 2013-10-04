@@ -7,12 +7,12 @@ use Behat\Behat\Context\ClosuredContextInterface,
 use Behat\Gherkin\Node\PyStringNode,
     Behat\Gherkin\Node\TableNode;
 
-require_once('BaseContext.php');
+require_once('ActiveLampContext.php');
 
 /**
  * Generic Drupal Behat functionality.
  */
-class DrupalContext extends BaseContext
+class DrupalContext extends ActiveLampContext
 {
 
 }

@@ -12,7 +12,7 @@ require_once('DrupalContext.php');
 /**
  * Generic Drupal Servie API Behat functionality.
  */
-class DrupalServiceAPIBehatContext extends DrupalContext
+class DrupalServiceAPIContext extends DrupalContext
 {
 
     // Store the raw response.

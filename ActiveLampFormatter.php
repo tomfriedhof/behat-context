@@ -6,7 +6,7 @@
 
 use Behat\Behat\Formatter\PrettyFormatter;
 
-class BaseFormatter extends PrettyFormatter {
+class ActiveLampFormatter extends PrettyFormatter {
 
     // Override the output message with this.
     protected $override_text = NULL;
@@ -54,7 +54,7 @@ class BaseFormatter extends PrettyFormatter {
         }
 
         $context = $event->getContext();
-        if ($context->override_text) {
+        if (isset($context->override_text)) {
         	$this->override_text = $context->override_text;
         	$context->override_text = NULL;
         }

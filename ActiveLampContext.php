@@ -11,9 +11,9 @@ use Behat\Behat\Context\ClosuredContextInterface,
 use Behat\Gherkin\Node\PyStringNode,
     Behat\Gherkin\Node\TableNode;
 
-require_once('BaseFormatter.php');
+require_once('ActiveLampFormatter.php');
 
-class BaseContext extends BehatContext {
+class ActiveLampContext extends BehatContext {
 
     // Parameters contained in the YML file.
     protected $parameters = NULL;
@@ -72,7 +72,7 @@ class BaseContext extends BehatContext {
      * @return mixed|NULL
      *   The value of the parameter or NULL if no property found.
      */
-    protected function getParameter($parameter_string) {
+    public function getParameter($parameter_string) {
         $parameters = explode('/', $parameter_string);
         $config = $this->parameters;
 
@@ -85,6 +85,20 @@ class BaseContext extends BehatContext {
         }
 
         return $config;
+    }
+
+    /**
+     * Execute a normal sql query.
+     *
+     * @return mixed
+     *   FALSE on failure, TRUE on success, otherwise a mysqli_result object
+     *
+     * @see http://www.php.net/manual/en/class.mysqli-result.php
+     */
+    public function query($query) {
+        $result = mysqli_query($this->db, $query);
+
+        return $result;
     }
 
     /**
