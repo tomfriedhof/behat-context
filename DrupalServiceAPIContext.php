@@ -277,10 +277,6 @@ class DrupalServiceAPIContext extends DrupalContext
             throw new Exception("Missing property: {$property_string}");
         }
         $property_type = gettype($property_value);
-        // Properties that are objects should qualify as arrays.
-        if ($type == 'array') {
-            $type = 'object';
-        }
         // Strings that are numbers should qualify as integers.
         if ($type == 'int' && is_numeric($property_value)) {
             $type = 'string';
