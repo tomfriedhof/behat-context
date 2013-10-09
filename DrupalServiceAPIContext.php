@@ -51,8 +51,7 @@ class DrupalServiceAPIContext extends DrupalContext
         $value = NULL;
         $properties = explode('/', $property_string);
         $response = $this->apiResponseArray;
-
-        while($property = array_shift($properties)) {
+        while(($property = array_shift($properties)) !== NULL) {
             $property = ($regex) ? "^{$property}$" : preg_quote($property);
             $value = NULL;
             $keys = array_keys($response);
@@ -65,7 +64,7 @@ class DrupalServiceAPIContext extends DrupalContext
             }
         } 
         // If property_string is empty then just return the entire array.
-        if (!$property_string || !strlen($property_string)) {
+        if ($property_string == '' || !strlen($property_string)) {
             $value = $this->apiResponseArray;
         }
 
@@ -277,8 +276,9 @@ class DrupalServiceAPIContext extends DrupalContext
             throw new Exception("Missing property: {$property_string}");
         }
         $property_type = gettype($property_value);
+        $property_type = ($property_type == 'integer') ? 'int' : $property_type;
         // Strings that are numbers should qualify as integers.
-        if ($type == 'int' && is_numeric($property_value)) {
+        if ($type == 'int' && ($property_type == 'string') && is_numeric($property_value)) {
             $type = 'string';
         }
 
