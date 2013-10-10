@@ -346,6 +346,42 @@ class DrupalServiceAPIContext extends DrupalContext
     }
 
     /**
+     * @Then /^property "([^"]*)" at least "([^"]*)" should be of type "([^"]*)"$/
+     *
+     * @param string $property_string
+     *   A property name or path to the property. Path the property can be
+     *   constructed with forward slashes '/' as the delimiters.
+     * @param int $required
+     *   The number of properties that should be of this type.
+     * @param string $type
+     *   The data type of the property. Can be 'int', 'string' or 'array'.
+     */
+    public function propertyAtLeastShouldBeOfType($property_string, $required, $type)
+    {
+        $amount = 0;
+        $property_value = $this->getAllProperty(explode('/', $property_string), $this->apiResponseArray);
+        if (empty($property_value)) {
+            throw new Exception("Missing property: {$property_string}");
+        }
+
+        foreach($property_value as $value) {
+            $property_type = gettype($value);
+            $property_type = ($property_type == 'integer' || $property_type == 'double') ? 'int' : $property_type;
+            // Strings that are numbers should qualify as integers.
+            if ($type == 'int' && ($property_type == 'string') && is_numeric($value)) {
+                $type = 'string';
+            }
+            if ($type == $property_type) {
+                $amount = $amount + 1;
+            }
+        }
+
+        if ($amount < $required) {
+            throw new Exception("Wrong amount of property types found for {$property_string}: {$amount}, Wanted: {$required}");
+        }
+    }
+
+    /**
      * @Then /^property "([^"]*)" should have "([^"]*)" children$/
      *
      * @param string $property_string
