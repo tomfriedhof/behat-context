@@ -72,6 +72,34 @@ class DrupalServiceAPIContext extends DrupalContext
     }
 
     /**
+     * Return the value of all properties matching a regular expression.
+     *
+     * @param array $property_array
+     *   An exploded property string.
+     * @param mixed $haystack
+     *
+     * @return array
+     *   Each element contains the value of the property or NULL if property
+     *   contains no value.
+     */
+    private function getAllProperty($property_array, $haystack) {
+        $value = array();
+        $property = '^' . array_shift($property_array) . '$';
+        $keys = array_keys($haystack);
+        foreach($keys as $key) {
+            if (preg_match("/{$property}/", $key)) {
+                if (count($property_array)) {
+                  $value[] = array_pop($this->getAllProperty($property_array, $haystack[$key]));
+                } else {
+                  $value[] = $haystack[$key];
+                }
+            } 
+        }
+
+        return $value;
+    }
+
+    /**
      * Determine if a property exists or not.
      *
      * @param string $property_string
@@ -276,7 +304,7 @@ class DrupalServiceAPIContext extends DrupalContext
             throw new Exception("Missing property: {$property_string}");
         }
         $property_type = gettype($property_value);
-        $property_type = ($property_type == 'integer') ? 'int' : $property_type;
+        $property_type = ($property_type == 'integer' || $property_type == 'double') ? 'int' : $property_type;
         // Strings that are numbers should qualify as integers.
         if ($type == 'int' && ($property_type == 'string') && is_numeric($property_value)) {
             $type = 'string';
@@ -284,6 +312,36 @@ class DrupalServiceAPIContext extends DrupalContext
 
         if ($type != $property_type) {
             throw new Exception("Wrong property type found for {$property_string}: {$property_type}");
+        }
+    }
+
+    /**
+     * @Then /^property "([^"]*)" all should be of type "([^"]*)"$/
+     *
+     * @param string $property_string
+     *   A property name or path to the property. Path the property can be
+     *   constructed with forward slashes '/' as the delimiters.
+     * @param string $type
+     *   The data type of the property. Can be 'int', 'string' or 'array'.
+     */
+    public function propertyAllShouldBeOfType($property_string, $type)
+    {
+        $property_value = $this->getAllProperty(explode('/', $property_string), $this->apiResponseArray);
+        if (empty($property_value)) {
+            throw new Exception("Missing property: {$property_string}");
+        }
+
+        foreach($property_value as $value) {
+            $property_type = gettype($value);
+            $property_type = ($property_type == 'integer' || $property_type == 'double') ? 'int' : $property_type;
+            // Strings that are numbers should qualify as integers.
+            if ($type == 'int' && ($property_type == 'string') && is_numeric($value)) {
+                $type = 'string';
+            }
+
+            if ($type != $property_type) {
+                throw new Exception("Wrong property type found for {$property_string}: {$property_type}");
+            }
         }
     }
 
