@@ -77,35 +77,28 @@ class DrupalServiceAPIContext extends DrupalContext
      * @param array $property_array
      *   An exploded property string.
      * @param mixed $haystack
+     * @param array $values
+     *   Used recursively to build return value.
      *
      * @return array
      *   Each element contains the value of the property or NULL if property
      *   contains no value. Returned array itself will be empty if no matching
      *   properties could be found.
      */
-    private function getAllProperty($property_array, $haystack) {
-        $value = array();
+    private function getAllProperty($property_array, $haystack, &$values = array()) {
         $property = '^' . array_shift($property_array) . '$';
         $keys = array_keys($haystack);
         foreach($keys as $key) {
             if (preg_match("/{$property}/", $key)) {
                 if (count($property_array)) {
-                    $result = $this->getAllProperty($property_array, $haystack[$key]);
-                    if (!empty($result)) {
-                        $value[] = $result;
-                    }
+                    $this->getAllProperty($property_array, $haystack[$key], $values);
                 } else {
-                    $value[] = $haystack[$key];
+                    $values[] = $haystack[$key];
                 }
             } 
         }
 
-        // Only add the wrapping array if we must.
-        if (count($value) == 1) {
-            $value = array_pop($value);
-        }
-
-        return $value;
+        return $values;
     }
 
     /**
