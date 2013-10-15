@@ -89,9 +89,10 @@ class DrupalServiceAPIContext extends DrupalContext
         foreach($keys as $key) {
             if (preg_match("/{$property}/", $key)) {
                 if (count($property_array)) {
-                  $value[] = array_pop($this->getAllProperty($property_array, $haystack[$key]));
+                    $result = $this->getAllProperty($property_array, $haystack[$key]);
+                    $value[] = array_pop($result);
                 } else {
-                  $value[] = $haystack[$key];
+                    $value[] = $haystack[$key];
                 }
             } 
         }
@@ -161,7 +162,7 @@ class DrupalServiceAPIContext extends DrupalContext
         // @todo probably want to use CURL so we can examine response headers.
         $url = $this->parameters['base_url'] . $path . ".{$format}{$append}";
  
-        $this->apiResponse = @file_get_contents($url);
+        $this->apiResponse = $this->iCall($url);
         if (!strlen($this->apiResponse)) {
             throw new Exception("Could not open $path");
         }

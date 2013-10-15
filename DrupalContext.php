@@ -6,6 +6,8 @@ use Behat\Behat\Context\ClosuredContextInterface,
     Behat\Behat\Exception\PendingException;
 use Behat\Gherkin\Node\PyStringNode,
     Behat\Gherkin\Node\TableNode;
+use Behat\MinkExtension\Context\RawMinkContext;
+use Behat\MinkExtension\Context\MinkContext;
 
 require_once('ActiveLampContext.php');
 
@@ -14,5 +16,43 @@ require_once('ActiveLampContext.php');
  */
 class DrupalContext extends ActiveLampContext
 {
+
+    protected $mink = NULL;
+
+    /**
+     * Initializes context.
+     * Every scenario gets it's own context object.
+     *
+     * @param array $parameters context parameters (set them up through behat.yml)
+     */
+    public function __construct(array $parameters)
+    {
+        parent::__construct($parameters);
+        $this->useContext('drupal_mink', new MinkContext($parameters));
+        $this->mink = $this->getMainContext()->getSubcontext('drupal_mink');
+    }
+
+    public function iCall($url) {
+    	$session = $this->mink->getSession()->visit($url);
+    	$content = $this->mink->getSession()->getPage()->getContent();
+
+        return $content;
+    }
+
+    /**
+     * @Given /^I am logged into drupal$/
+     */
+    public function iAmLoggedIntoDrupal()
+    {
+    	$base_url = $this->getParameter('base_url');
+    	$name = $this->getParameter('drupal/name');
+    	$password = $this->getParameter('drupal/password');
+
+        $this->iCall($base_url . '/user/login');
+        $this->mink->fillField('edit-name', $name);
+        $this->mink->fillField('edit-pass', $password);
+        $this->mink->pressButton('Log in');
+    }
+
 
 }
