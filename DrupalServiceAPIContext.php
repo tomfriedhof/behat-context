@@ -80,7 +80,8 @@ class DrupalServiceAPIContext extends DrupalContext
      *
      * @return array
      *   Each element contains the value of the property or NULL if property
-     *   contains no value.
+     *   contains no value. Returned array itself will be empty if no matching
+     *   properties could be found.
      */
     private function getAllProperty($property_array, $haystack) {
         $value = array();
@@ -90,14 +91,34 @@ class DrupalServiceAPIContext extends DrupalContext
             if (preg_match("/{$property}/", $key)) {
                 if (count($property_array)) {
                     $result = $this->getAllProperty($property_array, $haystack[$key]);
-                    $value[] = array_pop($result);
+                    if (!empty($result)) {
+                        $value[] = $result;
+                    }
                 } else {
                     $value[] = $haystack[$key];
                 }
             } 
         }
 
+        // Only add the wrapping array if we must.
+        if (count($value) == 1) {
+            $value = array_pop($value);
+        }
+
         return $value;
+    }
+
+    /**
+     * @Given /^foreach property "([^"]*)" a child "([^"]*)" should exist$/
+     */
+    public function foreachPropertyAChildShouldExist($property_string, $child)
+    {
+        $properties = $this->getAllProperty(explode('/', $property_string), $this->apiResponseArray);
+        foreach ($properties as $property) {
+            if (!array_key_exists($child, $property)) {
+                throw new Exception("Child {$child} does not exist on {$property_string}");
+            }
+        }
     }
 
     /**
@@ -160,7 +181,7 @@ class DrupalServiceAPIContext extends DrupalContext
     public function iCallAs($path, $format, $append = '')
     {
         // @todo probably want to use CURL so we can examine response headers.
-        $url = $this->parameters['base_url'] . $path . ".{$format}{$append}";
+        $url = $this->parameters['base_url'] . $this->getValue($path) . ".{$format}{$append}";
  
         $this->apiResponse = $this->iCall($url);
         if (!strlen($this->apiResponse)) {
@@ -189,25 +210,6 @@ class DrupalServiceAPIContext extends DrupalContext
     }
 
     /**
-     * @Given /^I call parameter "([^"]*)" as "([^"]*)"$/
-     *
-     * @param string $parameter_string
-     *   Property name or path to parameter as located in the YML config
-     *   file beneath the 'parameters' value.
-     * @param string $format
-     *   The format that the API should return the response in. Only 'json' is
-     *   currently supported.
-     */
-    public function iCallParameterAs($parameter_string, $format)
-    {
-        $parameter_value = $this->getParameter($parameter_string);
-        if ($parameter_value === NULL) {
-            throw new Exception("Missing config parameter: {$parameter_string}");
-        }
-        $this->iCallAs($parameter_value, $format);
-    }
-
-    /**
      * @Then /^property "([^"]*)" should exist$/
      *
      * @param string $property_string
@@ -228,7 +230,9 @@ class DrupalServiceAPIContext extends DrupalContext
      *   A property name or path to the property. Path the property can be
      *   constructed with forward slashes '/' as the delimiters.
      * @param mixed $value
-     *   The value the property must equal.
+     *   The literal value the property must equal, or if preceeded by an
+     *   '@' sign the parameter path of the value to compare against in
+     *   the yml config file.
      */
     public function propertyShouldBe($property_string, $value)
     {
@@ -236,37 +240,9 @@ class DrupalServiceAPIContext extends DrupalContext
         if ($property_value === NULL) {
             throw new Exception("Missing property: {$property_string}");
         }
-        if ($property_value != $value) {
+        if ($property_value != $this->getValue($value)) {
             throw new Exception("Wrong value found for {$property_string}: {$property_value}");
         }
-    }
-
-    /**
-     * @Then /^property "([^"]*)" should be parameter "([^"]*)"$/
-     *
-     * @param string $property_string
-     *   A property name or path to the property. Path the property can be
-     *   constructed with forward slashes '/' as the delimiters.
-     *
-     * @param string $config
-     *   Property name or path to property as located in the YML config
-     *   file beneath the 'parameters' value.
-     */
-    public function propertyShouldBeParameter($property_string, $parameter_string)
-    {
-        // Get value from config file.
-        $parameter_value = $this->getParameter($parameter_string);
-        if ($parameter_value === NULL) {
-            throw new Exception("Missing config parameter: {$parameter_string}");
-        }
-        $property_value = $this->getProperty($property_string);
-        if ($property_value === NULL) {
-            throw new Exception("Missing api property: {$property_string}");
-        }
-        if ($property_value != $parameter_value) {
-            throw new Exception("Wrong value found for {$property_string}: {$property_value}, wanted: {$parameter_value}");
-        }
-        $this->override_text = "property \"{$property_string}\" should be \"{$parameter_value}\"";
     }
 
     /**
@@ -284,7 +260,7 @@ class DrupalServiceAPIContext extends DrupalContext
         if ($property_value === NULL) {
             throw new Exception("Missing property: {$property_string}");
         }
-        if (!strstr($property_value, $value)) {
+        if (!strstr($property_value, $this->getValue($value))) {
             throw new Exception("Missing value ({$value}) inside {$property_string}: {$property_value}");
         }
     }
@@ -300,6 +276,7 @@ class DrupalServiceAPIContext extends DrupalContext
      */
     public function propertyShouldBeOfType($property_string, $type)
     {
+        $type = $this->getValue($type);
         $property_value = $this->getProperty($property_string);
         if ($property_value === NULL) {
             throw new Exception("Missing property: {$property_string}");
@@ -319,6 +296,9 @@ class DrupalServiceAPIContext extends DrupalContext
     /**
      * @Then /^property "([^"]*)" all should be of type "([^"]*)"$/
      *
+     * If no matching properties exist this method will return success. Only
+     * if matching properties are found will their type be tested.
+     *
      * @param string $property_string
      *   A property name or path to the property. Path the property can be
      *   constructed with forward slashes '/' as the delimiters.
@@ -327,10 +307,8 @@ class DrupalServiceAPIContext extends DrupalContext
      */
     public function propertyAllShouldBeOfType($property_string, $type)
     {
+        $type = $this->getValue($type);
         $property_value = $this->getAllProperty(explode('/', $property_string), $this->apiResponseArray);
-        if (empty($property_value)) {
-            throw new Exception("Missing property: {$property_string}");
-        }
 
         foreach($property_value as $value) {
             $property_type = gettype($value);
@@ -341,7 +319,7 @@ class DrupalServiceAPIContext extends DrupalContext
             }
 
             if ($type != $property_type) {
-                throw new Exception("Wrong property type found for {$property_string}: {$property_type}");
+                throw new Exception("Wrong property type found for {$property_string}: {$property_type}, wanted: {$type}");
             }
         }
     }
@@ -360,6 +338,7 @@ class DrupalServiceAPIContext extends DrupalContext
     public function propertyAtLeastShouldBeOfType($property_string, $required, $type)
     {
         $amount = 0;
+        $type = $this->getValue($type);
         $property_value = $this->getAllProperty(explode('/', $property_string), $this->apiResponseArray);
         if (empty($property_value)) {
             throw new Exception("Missing property: {$property_string}");
@@ -377,7 +356,7 @@ class DrupalServiceAPIContext extends DrupalContext
             }
         }
 
-        if ($amount < $required) {
+        if ($amount < $this->getValue($required)) {
             throw new Exception("Wrong amount of property types found for {$property_string}: {$amount}, Wanted: {$required}");
         }
     }
@@ -388,14 +367,14 @@ class DrupalServiceAPIContext extends DrupalContext
      * @param string $property_string
      *   A property name or path to the property. Path the property can be
      *   constructed with forward slashes '/' as the delimiters.
-     * @param int $number
+     * @param int $value
      *   Number of array elements the property should have.
      */
-    public function propertyShouldHaveChildren($property_string, $number)
+    public function propertyShouldHaveChildren($property_string, $value)
     {
         $property_value = $this->getProperty($property_string);
         $property_count = count((array) $property_value);
-        if ($property_count != $number) {
+        if ($property_count != $this->getValue($value)) {
             throw new Exception("Wrong number of elements found for {$property_string}: {$property_count}");
         }
     }    
@@ -406,14 +385,14 @@ class DrupalServiceAPIContext extends DrupalContext
      * @param string $property_string
      *   A property name or path to the property. Path the property can be
      *   constructed with forward slashes '/' as the delimiters.
-     * @param int $number
+     * @param int $value
      *   Number of array elements the property should have at least.
      */
-    public function propertyShouldHaveAtLeastChildren($property_string, $number)
+    public function propertyShouldHaveAtLeastChildren($property_string, $value)
     {
         $property_value = $this->getProperty($property_string);
         $property_count = count((array) $property_value);
-        if ($property_count < $number) {
+        if ($property_count < $this->getValue($value)) {
             throw new Exception("Wrong number of elements found for {$property_string}: {$property_count}");
         }
     }
@@ -424,25 +403,25 @@ class DrupalServiceAPIContext extends DrupalContext
      * @param string $property_string
      *   A property name or path to the property. Path the property can be
      *   constructed with forward slashes '/' as the delimiters.
-     * @param int $number
+     * @param int $value
      *   Number of array elements the property should have less than.
      */
-    public function propertyShouldHaveLessThanChildren($property_string, $number)
+    public function propertyShouldHaveLessThanChildren($property_string, $value)
     {
         $property_value = $this->getProperty($property_string);
         $property_count = count((array) $property_value);
-        if ($property_count >= $number) {
+        if ($property_count >= $this->getValue($value)) {
             throw new Exception("Wrong number of elements found for {$property_string}: {$property_count}");
         }
     }
 
     /**
-     * @Then /^property "([^"]*)" should be recursive parameter "([^"]*)"$/
+     * @Then /^property "([^"]*)" should be recursive "([^"]*)"$/
      */
-    public function propertyShouldBeRecursiveParameter($property_string, $parameter_string)
+    public function propertyShouldBeRecursive($property_string, $parameter_string)
     {
         $properties = $this->getProperty($property_string);
-        $parameters = $this->getParameter($parameter_string);
+        $parameters = $this->getValue($parameter_string);
         $properties_serial = serialize($properties);
         $parameters_serial = serialize($parameters);
         if ($properties_serial != $parameters_serial) {
@@ -451,5 +430,6 @@ class DrupalServiceAPIContext extends DrupalContext
             throw new Exception("Recursive keys or values do not match");
         }
     }
+
 
 }

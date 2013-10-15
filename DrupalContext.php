@@ -32,6 +32,18 @@ class DrupalContext extends ActiveLampContext
         $this->mink = $this->getMainContext()->getSubcontext('drupal_mink');
     }
 
+    /**
+     * Use mink's session management when accessing drupal.
+     *
+     * Session management is required to authenticate users and remember
+     * cookies.
+     *
+     * @param string $url
+     *   Fully formed, or relative, URL to visit.
+     *
+     * @return string
+     *   The result of the page visit.
+     */
     public function iCall($url) {
     	$session = $this->mink->getSession()->visit($url);
     	$content = $this->mink->getSession()->getPage()->getContent();

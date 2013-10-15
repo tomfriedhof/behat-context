@@ -88,6 +88,35 @@ class ActiveLampContext extends BehatContext {
     }
 
     /**
+     * Return the value of a string.
+     *
+     * The string may contain a literal value or a parameter string path.
+     * Strings that begin with the '@' sign will be interpreted as
+     * parameter paths.
+     *
+     * @param string $value_string
+     *
+     * @return mixed
+     *   The value of the string, or the value contained in the yml config
+     *   file referenced by interpreting string as a parameter path.
+     */
+    public function getValue($value_string) {
+      $result = $value_string;
+
+      // Backslash is just an escape character which identifies the remainder
+      // of the string as a literal, despite any further backslashes or '@'
+      // symbols.
+      if (substr($value_string, 0, 1) == '\\') {
+        $result = substr($value_string, 1);
+      }
+      elseif (substr($value_string, 0, 1) == '@') {
+        $result = $this->getParameter(substr($value_string, 1));
+      }
+
+      return $result;
+    }
+
+    /**
      * Execute a normal sql query.
      *
      * @return mixed
