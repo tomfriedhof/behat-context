@@ -51,18 +51,22 @@ class DrupalServiceAPIContext extends DrupalContext
         $value = NULL;
         $properties = explode('/', $property_string);
         $response = $this->apiResponseArray;
-        while(($property = array_shift($properties)) !== NULL) {
-            $property = ($regex) ? "^{$property}$" : preg_quote($property);
-            $value = NULL;
-            $keys = array_keys($response);
-            foreach($keys as $key) {
-                if (preg_match("/{$property}/", $key)) {
-                    $response = $response[$key];
-                    $value = $response;
-                    break;
+
+        if (is_array($response)) {
+            while(($property = array_shift($properties)) !== NULL) {
+                $property = ($regex) ? "^{$property}$" : preg_quote($property);
+                $value = NULL;
+                $keys = array_keys($response);
+                foreach($keys as $key) {
+                    if (preg_match("/{$property}/", $key)) {
+                        $response = $response[$key];
+                        $value = $response;
+                        break;
+                    }
                 }
             }
-        } 
+        }
+
         // If property_string is empty then just return the entire array.
         if ($property_string == '' || !strlen($property_string)) {
             $value = $this->apiResponseArray;
@@ -132,15 +136,17 @@ class DrupalServiceAPIContext extends DrupalContext
         $properties = explode('/', $property_string);
         $response = $this->apiResponseArray;
 
-        while($property = array_shift($properties)) {
-            $exists = FALSE;
-            $property = ($regex) ? "^{$property}$" : preg_quote($property);
-            $keys = array_keys($response);
-            foreach($keys as $key) {
-                if (preg_match("/{$property}/", $key)) {
-                    $response = $response[$key];
-                    $exists = TRUE;
-                    break;
+        if (is_array($response)) {
+            while($property = array_shift($properties)) {
+                $exists = FALSE;
+                $property = ($regex) ? "^{$property}$" : preg_quote($property);
+                $keys = array_keys($response);
+                foreach($keys as $key) {
+                    if (preg_match("/{$property}/", $key)) {
+                        $response = $response[$key];
+                        $exists = TRUE;
+                        break;
+                    }
                 }
             }
         }
