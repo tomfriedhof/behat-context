@@ -152,6 +152,9 @@ class DrupalServiceAPIContext extends DrupalContext
     public function foreachPropertyAChildShouldBeOfType($property_string, $child, $type)
     {
         $properties = $this->getAllProperty(explode('/', $property_string), $this->apiResponseArray);
+        if (!is_array($properties) || empty($properties)) {
+            throw new Exception("Child \"{$child}\" was not found for {$property_string}");
+        }
         foreach ($properties as $property) {
             if (!array_key_exists($child, $property)) {
                 throw new Exception("Child {$child} does not exist on {$property_string}");
