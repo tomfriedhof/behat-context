@@ -119,6 +119,48 @@ class DrupalServiceAPIContext extends DrupalContext
     }
 
     /**
+     * Determine if a value is of a specified type.
+     *
+     * @param mixed $value
+     *   The value to match type against.
+     * @param string $type
+     *   The type that value must be.
+     *
+     * @return void
+     *   Throws exception if value if of the wrong type.
+     */
+    protected function assertValueShouldBeOfType($value, $type) {
+        $is_type = FALSE;
+
+        $property_type = gettype($value);
+        $property_type = ($property_type == 'integer' || $property_type == 'double') ? 'int' : $property_type;
+        // Strings that are numbers should qualify as integers.
+        if ($type == 'int' && ($property_type == 'string') && is_numeric($value)) {
+            $type = 'string';
+        }
+
+        if ($type != $property_type) {
+            throw new Exception("Wrong property type found: {$property_type}. Wanted: {$type}.");
+        }
+
+        return;
+    }
+
+    /**
+     * @Given /^foreach property "([^"]*)" a child "([^"]*)" should be of type "([^"]*)"$/
+     */
+    public function foreachPropertyAChildShouldBeOfType($property_string, $child, $type)
+    {
+        $properties = $this->getAllProperty(explode('/', $property_string), $this->apiResponseArray);
+        foreach ($properties as $property) {
+            if (!array_key_exists($child, $property)) {
+                throw new Exception("Child {$child} does not exist on {$property_string}");
+            }
+            $this->assertValueShouldBeOfType($property[$child], $type);
+        }
+    }
+
+    /**
      * Determine if a property exists or not.
      *
      * @param string $property_string
@@ -277,19 +319,12 @@ class DrupalServiceAPIContext extends DrupalContext
     {
         $type = $this->getValue($type);
         $property_value = $this->getProperty($property_string);
+
         if ($property_value === NULL) {
             throw new Exception("Missing property: {$property_string}");
         }
-        $property_type = gettype($property_value);
-        $property_type = ($property_type == 'integer' || $property_type == 'double') ? 'int' : $property_type;
-        // Strings that are numbers should qualify as integers.
-        if ($type == 'int' && ($property_type == 'string') && is_numeric($property_value)) {
-            $type = 'string';
-        }
 
-        if ($type != $property_type) {
-            throw new Exception("Wrong property type found for {$property_string}: {$property_type}");
-        }
+        $this->assertValueShouldBeOfType($property_value, $type);
     }
 
     /**
@@ -310,16 +345,7 @@ class DrupalServiceAPIContext extends DrupalContext
         $property_value = $this->getAllProperty(explode('/', $property_string), $this->apiResponseArray);
 
         foreach($property_value as $value) {
-            $property_type = gettype($value);
-            $property_type = ($property_type == 'integer' || $property_type == 'double') ? 'int' : $property_type;
-            // Strings that are numbers should qualify as integers.
-            if ($type == 'int' && ($property_type == 'string') && is_numeric($value)) {
-                $type = 'string';
-            }
-
-            if ($type != $property_type) {
-                throw new Exception("Wrong property type found for {$property_string}: {$property_type}, wanted: {$type}");
-            }
+            $this->assertValueShouldBeOfType($value, $type);
         }
     }
 
