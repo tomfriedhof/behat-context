@@ -106,19 +106,6 @@ class DrupalServiceAPIContext extends DrupalContext
     }
 
     /**
-     * @Given /^foreach property "([^"]*)" a child "([^"]*)" should exist$/
-     */
-    public function foreachPropertyAChildShouldExist($property_string, $child)
-    {
-        $properties = $this->getAllProperty(explode('/', $property_string), $this->apiResponseArray);
-        foreach ($properties as $property) {
-            if (!array_key_exists($child, $property)) {
-                throw new Exception("Child {$child} does not exist on {$property_string}");
-            }
-        }
-    }
-
-    /**
      * Determine if a value is of a specified type.
      *
      * @param mixed $value
@@ -147,21 +134,47 @@ class DrupalServiceAPIContext extends DrupalContext
     }
 
     /**
-     * @Given /^foreach property "([^"]*)" a child "([^"]*)" should be of type "([^"]*)"$/
+     * @Given /^foreach property "([^"]*)" a child "([^"]*)" should exist$/
      */
-    public function foreachPropertyAChildShouldBeOfType($property_string, $child, $type)
+    public function foreachPropertyAChildShouldExist($property_string, $child)
     {
         $properties = $this->getAllProperty(explode('/', $property_string), $this->apiResponseArray);
-        if (!is_array($properties) || empty($properties)) {
-            throw new Exception("Child \"{$child}\" was not found for {$property_string}");
-        }
         foreach ($properties as $property) {
             if (!array_key_exists($child, $property)) {
                 throw new Exception("Child {$child} does not exist on {$property_string}");
             }
-            $this->assertValueShouldBeOfType($property[$child], $type);
         }
     }
+
+    /**
+     * @Given /^foreach property "([^"]*)" a child "([^"]*)" should be of type "([^"]*)"$/
+     *
+     * @param string $property_string
+     *   A property name or path to the property. Path the property can be
+     *   constructed with forward slashes '/' as the delimiters. Property
+     *   names may contain regular expression matches.
+     * @param string $child
+     *   The name of the child property. Property name may contain regular
+     *   expression.
+     */
+    public function foreachPropertyAChildShouldBeOfType($property_string, $child, $type)
+    {
+        $properties = $this->getAllProperty(explode('/', $property_string), $this->apiResponseArray);
+        foreach ($properties as $property) {
+            $found_child = FALSE;
+            $child = '^' . $child . '$';
+            $keys = array_keys($property);
+            foreach($keys as $key) {
+                if (preg_match("/{$child}/", $key)) {
+                    $this->assertValueShouldBeOfType($property[$key], $type);
+                    $found_child = TRUE;
+                }
+            }
+            if (!$found_child) {
+                throw new Exception("Child {$child} does not exist on {$property_string}");
+            }
+        }
+    }   
 
     /**
      * Determine if a property exists or not.
@@ -357,7 +370,8 @@ class DrupalServiceAPIContext extends DrupalContext
      *
      * @param string $property_string
      *   A property name or path to the property. Path the property can be
-     *   constructed with forward slashes '/' as the delimiters.
+     *   constructed with forward slashes '/' as the delimiters. Property
+     *   names may contain regular expression matches.
      * @param int $required
      *   The number of properties that should be of this type.
      * @param string $type
@@ -386,6 +400,92 @@ class DrupalServiceAPIContext extends DrupalContext
 
         if ($amount < $this->getValue($required)) {
             throw new Exception("Wrong amount of property types found for {$property_string}: {$amount}, Wanted: {$required}");
+        }
+    }
+
+    /**
+     * @Then /^property "([^"]*)" at least "([^"]*)" should exist$/
+     *
+     * @param string $property_string
+     *   A property name or path to the property. Path the property can be
+     *   constructed with forward slashes '/' as the delimiters. Property
+     *   names may contain regular expression matches.
+     * @param int $required
+     *   The number of properties that should be of this type.
+     */
+    public function propertyAtLeastShouldExist($property_string, $required)
+    {
+        $amount = 0;
+        $properties = $this->getAllProperty(explode('/', $property_string), $this->apiResponseArray);
+        if (!is_array($properties) || empty($properties)) {
+            throw new Exception("Missing property: {$property_string}");
+        }
+
+        $properties_count = count($properties);
+        if ($properties_count < $this->getValue($required)) {
+            throw new Exception("Wrong amount of property instances found for {$property_string}: {$properties_count}, Wanted: {$required}");
+        }
+    }
+
+    /**
+     * @Then /^property "([^"]*)" at least "([^"]*)" should have "([^"]*)" children$/
+     *
+     * @param string $property_string
+     *   A property name or path to the property. Path the property can be
+     *   constructed with forward slashes '/' as the delimiters. Property
+     *   names may contain regular expression matches.
+     * @param int $value
+     *   Number of array elements the property should have.
+     */
+    public function propertyAtLeastShouldHaveChildren($property_string, $required, $children)
+    {
+        $amount = 0;
+        $children = $this->getValue($children);
+        $required = $this->getValue($required);
+        $properties = $this->getAllProperty(explode('/', $property_string), $this->apiResponseArray);
+        if (empty($properties)) {
+            throw new Exception("Missing property: {$property_string}");
+        }
+
+        foreach($properties as $property) {
+            if (is_array($property) && (count($property) == $children)) {
+                $amount = $amount + 1;
+            }
+        }
+
+        if ($amount < $this->getValue($required)) {
+            throw new Exception("Wrong amount of properties found for {$property_string}: {$amount}, Wanted: {$required} each with {$children} children.");
+        }
+    }
+
+    /**
+     * @Then /^property "([^"]*)" at least "([^"]*)" should have at least "([^"]*)" children$/
+     *
+     * @param string $property_string
+     *   A property name or path to the property. Path the property can be
+     *   constructed with forward slashes '/' as the delimiters. Property
+     *   names may contain regular expression matches.
+     * @param int $value
+     *   Number of array elements the property should have at least or more than.
+     */
+    public function propertyAtLeastShouldHaveAtLeastChildren($property_string, $required, $children)
+    {
+        $amount = 0;
+        $children = $this->getValue($children);
+        $required = $this->getValue($required);
+        $properties = $this->getAllProperty(explode('/', $property_string), $this->apiResponseArray);
+        if (empty($properties)) {
+            throw new Exception("Missing property: {$property_string}");
+        }
+
+        foreach($properties as $property) {
+            if (is_array($property) && (count($property) >= $children)) {
+                $amount = $amount + 1;
+            }
+        }
+
+        if ($amount < $this->getValue($required)) {
+            throw new Exception("Wrong amount of properties found for {$property_string}: {$amount}, Wanted: {$required} each with {$children} children.");
         }
     }
 
