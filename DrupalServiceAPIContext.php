@@ -108,26 +108,37 @@ class DrupalServiceAPIContext extends DrupalContext
     /**
      * Determine if a value is of a specified type.
      *
+     * See inline comments for special handling when PHP consideres the value
+     * to be a string.
+     *
      * @param mixed $value
      *   The value to match type against.
      * @param string $type
-     *   The type that value must be.
+     *   The type that value must be. More than one type may be specified by
+     *   seperating each type with a pipe "|". Acceptable types are:
+     *   "array", "string", "int", and "NULL".
      *
      * @return void
      *   Throws exception if value if of the wrong type.
      */
     protected function assertValueShouldBeOfType($value, $type) {
-        $is_type = FALSE;
-
+        $types = explode('|', $type);
         $property_type = gettype($value);
+
+        // Convert integers and doubles to 'int'.
         $property_type = ($property_type == 'integer' || $property_type == 'double') ? 'int' : $property_type;
-        // Strings that are numbers should qualify as integers.
-        if ($type == 'int' && ($property_type == 'string') && is_numeric($value)) {
-            $type = 'string';
+        // Convert strings to 'int' if the string qualifies as a number and
+        // 'int' is desired.
+        if ($property_type == 'string' && is_numeric($value) && in_array('int', $types)) {
+            $property_type = 'int';
+        }
+        // Convert strings that are empty to NULL.
+        if (($property_type == 'string') && (strlen($value) == 0)) {
+            $property_type = 'NULL';
         }
 
-        if ($type != $property_type) {
-            throw new Exception("Wrong property type found: {$property_type}. Wanted: {$type}.");
+        if (!in_array($property_type, $types)) {
+            throw new Exception("Wrong property type found: \"{$property_type}\" for value \"{$value}\". Wanted: \"{$type}\".");
         }
 
         return;
@@ -330,6 +341,9 @@ class DrupalServiceAPIContext extends DrupalContext
      *   constructed with forward slashes '/' as the delimiters.
      * @param string $type
      *   The data type of the property. Can be 'int', 'string' or 'array'.
+     *
+     * @return void
+     *   Called method will throw exception if value is not of type.
      */
     public function propertyShouldBeOfType($property_string, $type)
     {
@@ -363,6 +377,40 @@ class DrupalServiceAPIContext extends DrupalContext
         foreach($property_value as $value) {
             $this->assertValueShouldBeOfType($value, $type);
         }
+    }
+
+    /**
+     * @Then /^property "([^"]*)" all children should be named "([^"]*)"$/
+     *
+     * @param string $property_string
+     *   A property name or path to the property. Path the property can be
+     *   constructed with forward slashes '/' as the delimiters. Property
+     *   names may contain regular expression matches.
+     * @param string $name
+     *   The data type of the property. Can be 'int', 'string' or 'array'.
+     *   May contain regular expression matches.
+     *
+     * @return void
+     *   Throws an exception if a property exists, it has children, and any of
+     *   the found children are not named according to $name.
+     */
+    public function propertyAllChildrenShouldBeNamed($property_string, $name)
+    {
+        $name_pattern = '^' . $this->getValue($name) . '$';
+        $properties = $this->getAllProperty(explode('/', $property_string), $this->apiResponseArray);
+
+        foreach($properties as $property) {
+            if (is_array($property) && !empty($property)) {
+                $keys = array_keys($property);
+                foreach($keys as $key) {
+                    if (!preg_match("/{$name_pattern}/", $key)) {
+                        throw new Exception("Child name: \"{$key}\" does not match pattern: \"{$name_pattern}\"");
+                    }
+                }
+            }
+        }
+
+        return;
     }
 
     /**
