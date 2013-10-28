@@ -45,6 +45,7 @@ class DrupalContext extends ActiveLampContext
      *   The result of the page visit.
      */
     public function iCall($url) {
+        $this->printDebug("Calling: {$url}");
     	$session = $this->mink->getSession()->visit($url);
     	$content = $this->mink->getSession()->getPage()->getContent();
 
@@ -66,5 +67,14 @@ class DrupalContext extends ActiveLampContext
         $this->mink->pressButton('Log in');
     }
 
+    /**
+     * @Given /^I am logged out of drupal$/
+     */
+    public function iAmLoggedOutOfDrupal()
+    {
+        $base_url = $this->getParameter('base_url');
+
+        $this->iCall($base_url . '/user/logout');
+    }
 
 }
