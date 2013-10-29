@@ -248,9 +248,14 @@ class DrupalServiceAPIContext extends DrupalContext
      */
     public function iCallAs($path, $format, $append = '')
     {
+        if (PHP_SAPI === 'cli') {
+          $path = '/?q=' . substr($this->getValue($path), 1);
+          $append = '&' . substr($append, 1);
+        }
+
         // @todo probably want to use CURL so we can examine response headers.
         $url = $this->parameters['base_url'] . $this->getValue($path) . ".{$format}{$append}";
- 
+
         $this->apiResponse = $this->iCall($url);
         if (!strlen($this->apiResponse)) {
             throw new Exception("Could not open $path");
