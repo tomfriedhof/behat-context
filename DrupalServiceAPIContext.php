@@ -94,7 +94,7 @@ class DrupalServiceAPIContext extends DrupalContext
         if (is_array($haystack)) {
             $keys = array_keys($haystack);
         }
-        if (is_array($keys)) {
+        if (isset($keys) && is_array($keys)) {
             foreach($keys as $key) {
                 if (preg_match("/{$property}/", $key)) {
                     if (count($property_array)) {
@@ -360,7 +360,9 @@ class DrupalServiceAPIContext extends DrupalContext
         $property_value = $this->getProperty($property_string);
 
         if ($property_value === NULL) {
-            throw new Exception("Missing property: {$property_string}");
+            if (!$this->propertyExists($property_string)) {
+                throw new Exception("Missing property: {$property_string}");
+            }
         }
 
         $this->assertValueShouldBeOfType($property_value, $type);
