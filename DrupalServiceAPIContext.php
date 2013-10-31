@@ -91,7 +91,9 @@ class DrupalServiceAPIContext extends DrupalContext
      */
     private function getAllProperty($property_array, $haystack, &$values = array()) {
         $property = '^' . array_shift($property_array) . '$';
-        $keys = array_keys($haystack);
+        if (is_array($haystack)) {
+            $keys = array_keys($haystack);
+        }
         if (is_array($keys)) {
             foreach($keys as $key) {
                 if (preg_match("/{$property}/", $key)) {
