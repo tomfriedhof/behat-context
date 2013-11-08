@@ -91,19 +91,15 @@ class DrupalServiceAPIContext extends DrupalContext
      */
     private function getAllProperty($property_array, $haystack, &$values = array()) {
         $property = '^' . array_shift($property_array) . '$';
-        if (is_array($haystack)) {
-            $keys = array_keys($haystack);
-        }
-        if (isset($keys) && is_array($keys)) {
-            foreach($keys as $key) {
-                if (preg_match("/{$property}/", $key)) {
-                    if (count($property_array)) {
-                        $this->getAllProperty($property_array, $haystack[$key], $values);
-                    } else {
-                        $values[] = $haystack[$key];
-                    }
-                } 
-            }
+        $keys = array_keys($haystack);
+        foreach($keys as $key) {
+            if (preg_match("/{$property}/", $key)) {
+                if (count($property_array)) {
+                    $this->getAllProperty($property_array, $haystack[$key], $values);
+                } else {
+                    $values[] = $haystack[$key];
+                }
+            } 
         }
 
         return $values;
@@ -323,6 +319,28 @@ class DrupalServiceAPIContext extends DrupalContext
     }
 
     /**
+     * @Then /^property "([^"]*)" should match "([^"]*)"$/
+     *
+     * @param string $property_string
+     *   A property name or path to the property. Path the property can be
+     *   constructed with forward slashes '/' as the delimiters.
+     * @param mixed $value
+     *   The literal value the property must equal, or if preceeded by an
+     *   '@' sign the parameter path of the value to compare against in
+     *   the yml config file.
+     */
+    public function propertyShouldMatch($property_string, $value)
+    {
+        $property_value = $this->getProperty($property_string);
+        if ($property_value === NULL) {
+            throw new Exception("Missing property: {$property_string}");
+        }
+        if (!preg_match("{$value}", $property_value)) {
+            throw new Exception("Wrong value found for {$property_string}: {$property_value}. Wanted: {$value}");
+        }
+    }
+
+    /**
      * @Then /^property "([^"]*)" should contain "([^"]*)"$/
      *
      * @param string $property_string
@@ -360,9 +378,7 @@ class DrupalServiceAPIContext extends DrupalContext
         $property_value = $this->getProperty($property_string);
 
         if ($property_value === NULL) {
-            if (!$this->propertyExists($property_string)) {
-                throw new Exception("Missing property: {$property_string}");
-            }
+            throw new Exception("Missing property: {$property_string}");
         }
 
         $this->assertValueShouldBeOfType($property_value, $type);
