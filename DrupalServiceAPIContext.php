@@ -374,12 +374,12 @@ class DrupalServiceAPIContext extends DrupalContext
      */
     public function propertyShouldBeOfType($property_string, $type)
     {
-        $type = $this->getValue($type);
-        $property_value = $this->getProperty($property_string);
-
-        if ($property_value === NULL) {
+        if (!$this->property_exists($property_string)) {
             throw new Exception("Missing property: {$property_string}");
         }
+
+        $type = $this->getValue($type);
+        $property_value = $this->getProperty($property_string);
 
         $this->assertValueShouldBeOfType($property_value, $type);
     }
