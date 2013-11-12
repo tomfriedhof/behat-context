@@ -374,7 +374,7 @@ class DrupalServiceAPIContext extends DrupalContext
      */
     public function propertyShouldBeOfType($property_string, $type)
     {
-        if (!$this->property_exists($property_string)) {
+        if (!$this->propertyExists($property_string)) {
             throw new Exception("Missing property: {$property_string}");
         }
 
