@@ -45,7 +45,7 @@ class DrupalServiceAPIContext extends DrupalContext
      *
      * @return mixed|null
      *   The value of the property or NULL if no property found or property
-     *   contains no value.
+     *   contains no value. (use propertyExists to determine the difference).
      */
     private function getProperty($property_string, $regex = TRUE) {
         $value = NULL;
@@ -90,6 +90,7 @@ class DrupalServiceAPIContext extends DrupalContext
      *   properties could be found.
      */
     private function getAllProperty($property_array, $haystack, &$values = array()) {
+        $keys = NULL;
         $property = '^' . array_shift($property_array) . '$';
         if (is_array($haystack)) {
             $keys = array_keys($haystack);
@@ -314,7 +315,7 @@ class DrupalServiceAPIContext extends DrupalContext
     public function propertyShouldBe($property_string, $value)
     {
         $property_value = $this->getProperty($property_string);
-        if ($property_value === NULL) {
+        if ($property_value === NULL && !$this->propertyExists($property_string)) {
             throw new Exception("Missing property: {$property_string}");
         }
         if ($property_value != $this->getValue($value)) {
