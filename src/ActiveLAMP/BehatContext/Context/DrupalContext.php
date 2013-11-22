@@ -1,5 +1,6 @@
 <?php
 
+namespace ActiveLAMP\BehatContext\Context;
 use Behat\Behat\Context\ClosuredContextInterface,
     Behat\Behat\Context\TranslatedContextInterface,
     Behat\Behat\Context\BehatContext,
@@ -7,9 +8,9 @@ use Behat\Behat\Context\ClosuredContextInterface,
 use Behat\Gherkin\Node\PyStringNode,
     Behat\Gherkin\Node\TableNode;
 use Behat\MinkExtension\Context\RawMinkContext;
-use Behat\MinkExtension\Context\MinkContext;
 
-require_once('ActiveLampContext.php');
+use Behat\MinkExtension\Context\MinkContext;
+use ActiveLAMP\BehatContext\Context\ActiveLampContext;
 
 /**
  * Generic Drupal Behat functionality.

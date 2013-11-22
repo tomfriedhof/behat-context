@@ -10,8 +10,11 @@ use Behat\Behat\Context\ClosuredContextInterface,
     Behat\Behat\Exception\PendingException;
 use Behat\Gherkin\Node\PyStringNode,
     Behat\Gherkin\Node\TableNode;
+use ActiveLAMP\BehatContext\ALFormatter\ActiveLampFormatter;
 
-require_once('ActiveLampFormatter.php');
+namespace ActiveLAMP\BehatContext\Context;
+
+use Behat\Behat\Context\BehatContext;
 
 class ActiveLampContext extends BehatContext {
 

@@ -1,0 +1,14 @@
+{
+    "name": "activelamp/behat-context",
+    "description": "Useful extensions of the BehatContext class.",
+    "minimum-stability": "dev",
+    "require": {
+        "php": ">=5.3.0"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-0": {
+            "ActiveLAMP\\BehatContext": "src/"
+        }
+    }
+}

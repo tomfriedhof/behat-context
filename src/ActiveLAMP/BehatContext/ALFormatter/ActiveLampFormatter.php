@@ -6,6 +6,8 @@
 
 use Behat\Behat\Formatter\PrettyFormatter;
 
+namespace ActiveLAMP\BehatContext\ALFormatter;
+
 class ActiveLampFormatter extends PrettyFormatter {
 
     // Override the output message with this.

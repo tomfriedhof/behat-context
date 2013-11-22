@@ -6,8 +6,9 @@ use Behat\Behat\Context\ClosuredContextInterface,
     Behat\Behat\Exception\PendingException;
 use Behat\Gherkin\Node\PyStringNode,
     Behat\Gherkin\Node\TableNode;
+use ActiveLAMP\BehatContext\Context\DrupalContext;
 
-require_once('DrupalContext.php');
+namespace ActiveLAMP\BehatContext\Context;
 
 /**
  * Generic Drupal Servie API Behat functionality.
@@ -143,7 +144,7 @@ class DrupalServiceAPIContext extends DrupalContext
         }
 
         if (!in_array($property_type, $types)) {
-            throw new Exception("Wrong property type found: \"{$property_type}\" for value \"{$value}\". Wanted: \"{$type}\".");
+            throw new \Exception("Wrong property type found: \"{$property_type}\" for value \"{$value}\". Wanted: \"{$type}\".");
         }
 
         return;
@@ -157,7 +158,7 @@ class DrupalServiceAPIContext extends DrupalContext
         $properties = $this->getAllProperty(explode('/', $property_string), $this->apiResponseArray);
         foreach ($properties as $property) {
             if (!array_key_exists($child, $property)) {
-                throw new Exception("Child {$child} does not exist on {$property_string}");
+                throw new \Exception("Child {$child} does not exist on {$property_string}");
             }
         }
     }
@@ -187,7 +188,7 @@ class DrupalServiceAPIContext extends DrupalContext
                 }
             }
             if (!$found_child) {
-                throw new Exception("Child {$child} does not exist on {$property_string}");
+                throw new \Exception("Child {$child} does not exist on {$property_string}");
             }
         }
     }   
@@ -263,7 +264,7 @@ class DrupalServiceAPIContext extends DrupalContext
 
         $this->apiResponse = $this->iCall($url);
         if (!strlen($this->apiResponse)) {
-            throw new Exception("Could not open $path");
+            throw new \Exception("Could not open $path");
         }
         if ($format == 'json') {
             $this->apiResponseType = 'json';
@@ -297,7 +298,7 @@ class DrupalServiceAPIContext extends DrupalContext
     public function propertyShouldExist($property_string)
     {
         if (!$this->propertyExists($property_string)) {
-            throw new Exception("Property {$property_string} does not exist");
+            throw new \Exception("Property {$property_string} does not exist");
         }
     }
 
@@ -316,10 +317,10 @@ class DrupalServiceAPIContext extends DrupalContext
     {
         $property_value = $this->getProperty($property_string);
         if ($property_value === NULL && !$this->propertyExists($property_string)) {
-            throw new Exception("Missing property: {$property_string}");
+            throw new \Exception("Missing property: {$property_string}");
         }
         if ($property_value != $this->getValue($value)) {
-            throw new Exception("Wrong value found for {$property_string}: {$property_value}");
+            throw new \Exception("Wrong value found for {$property_string}: {$property_value}");
         }
     }
 
@@ -338,10 +339,10 @@ class DrupalServiceAPIContext extends DrupalContext
     {
         $property_value = $this->getProperty($property_string);
         if ($property_value === NULL) {
-            throw new Exception("Missing property: {$property_string}");
+            throw new \Exception("Missing property: {$property_string}");
         }
         if (!preg_match("{$value}", $property_value)) {
-            throw new Exception("Wrong value found for {$property_string}: {$property_value}. Wanted: {$value}");
+            throw new \Exception("Wrong value found for {$property_string}: {$property_value}. Wanted: {$value}");
         }
     }
 
@@ -358,10 +359,10 @@ class DrupalServiceAPIContext extends DrupalContext
     {
         $property_value = $this->getProperty($property_string);
         if ($property_value === NULL) {
-            throw new Exception("Missing property: {$property_string}");
+            throw new \Exception("Missing property: {$property_string}");
         }
         if (!strstr($property_value, $this->getValue($value))) {
-            throw new Exception("Missing value ({$value}) inside {$property_string}: {$property_value}");
+            throw new \Exception("Missing value ({$value}) inside {$property_string}: {$property_value}");
         }
     }
 
@@ -380,7 +381,7 @@ class DrupalServiceAPIContext extends DrupalContext
     public function propertyShouldBeOfType($property_string, $type)
     {
         if (!$this->propertyExists($property_string)) {
-            throw new Exception("Missing property: {$property_string}");
+            throw new \Exception("Missing property: {$property_string}");
         }
 
         $type = $this->getValue($type);
@@ -436,7 +437,7 @@ class DrupalServiceAPIContext extends DrupalContext
                 $keys = array_keys($property);
                 foreach($keys as $key) {
                     if (!preg_match("/{$name_pattern}/", $key)) {
-                        throw new Exception("Child name: \"{$key}\" does not match pattern: \"{$name_pattern}\"");
+                        throw new \Exception("Child name: \"{$key}\" does not match pattern: \"{$name_pattern}\"");
                     }
                 }
             }
@@ -463,7 +464,7 @@ class DrupalServiceAPIContext extends DrupalContext
         $type = $this->getValue($type);
         $property_value = $this->getAllProperty(explode('/', $property_string), $this->apiResponseArray);
         if (empty($property_value)) {
-            throw new Exception("Missing property: {$property_string}");
+            throw new \Exception("Missing property: {$property_string}");
         }
 
         foreach($property_value as $value) {
@@ -479,7 +480,7 @@ class DrupalServiceAPIContext extends DrupalContext
         }
 
         if ($amount < $this->getValue($required)) {
-            throw new Exception("Wrong amount of property types found for {$property_string}: {$amount}, Wanted: {$required}");
+            throw new \Exception("Wrong amount of property types found for {$property_string}: {$amount}, Wanted: {$required}");
         }
     }
 
@@ -498,12 +499,12 @@ class DrupalServiceAPIContext extends DrupalContext
         $amount = 0;
         $properties = $this->getAllProperty(explode('/', $property_string), $this->apiResponseArray);
         if (!is_array($properties) || empty($properties)) {
-            throw new Exception("Missing property: {$property_string}");
+            throw new \Exception("Missing property: {$property_string}");
         }
 
         $properties_count = count($properties);
         if ($properties_count < $this->getValue($required)) {
-            throw new Exception("Wrong amount of property instances found for {$property_string}: {$properties_count}, Wanted: {$required}");
+            throw new \Exception("Wrong amount of property instances found for {$property_string}: {$properties_count}, Wanted: {$required}");
         }
     }
 
@@ -524,7 +525,7 @@ class DrupalServiceAPIContext extends DrupalContext
         $required = $this->getValue($required);
         $properties = $this->getAllProperty(explode('/', $property_string), $this->apiResponseArray);
         if (empty($properties)) {
-            throw new Exception("Missing property: {$property_string}");
+            throw new \Exception("Missing property: {$property_string}");
         }
 
         foreach($properties as $property) {
@@ -534,7 +535,7 @@ class DrupalServiceAPIContext extends DrupalContext
         }
 
         if ($amount < $this->getValue($required)) {
-            throw new Exception("Wrong amount of properties found for {$property_string}: {$amount}, Wanted: {$required} each with {$children} children.");
+            throw new \Exception("Wrong amount of properties found for {$property_string}: {$amount}, Wanted: {$required} each with {$children} children.");
         }
     }
 
@@ -555,7 +556,7 @@ class DrupalServiceAPIContext extends DrupalContext
         $required = $this->getValue($required);
         $properties = $this->getAllProperty(explode('/', $property_string), $this->apiResponseArray);
         if (empty($properties)) {
-            throw new Exception("Missing property: {$property_string}");
+            throw new \Exception("Missing property: {$property_string}");
         }
 
         foreach($properties as $property) {
@@ -565,7 +566,7 @@ class DrupalServiceAPIContext extends DrupalContext
         }
 
         if ($amount < $this->getValue($required)) {
-            throw new Exception("Wrong amount of properties found for {$property_string}: {$amount}, Wanted: {$required} each with {$children} children.");
+            throw new \Exception("Wrong amount of properties found for {$property_string}: {$amount}, Wanted: {$required} each with {$children} children.");
         }
     }
 
@@ -583,7 +584,7 @@ class DrupalServiceAPIContext extends DrupalContext
         $property_value = $this->getProperty($property_string);
         $property_count = count((array) $property_value);
         if ($property_count != $this->getValue($value)) {
-            throw new Exception("Wrong number of elements found for {$property_string}: {$property_count}");
+            throw new \Exception("Wrong number of elements found for {$property_string}: {$property_count}");
         }
     }    
 
@@ -601,7 +602,7 @@ class DrupalServiceAPIContext extends DrupalContext
         $property_value = $this->getProperty($property_string);
         $property_count = count((array) $property_value);
         if ($property_count < $this->getValue($value)) {
-            throw new Exception("Wrong number of elements found for {$property_string}: {$property_count}");
+            throw new \Exception("Wrong number of elements found for {$property_string}: {$property_count}");
         }
     }
 
@@ -619,7 +620,7 @@ class DrupalServiceAPIContext extends DrupalContext
         $property_value = $this->getProperty($property_string);
         $property_count = count((array) $property_value);
         if ($property_count >= $this->getValue($value)) {
-            throw new Exception("Wrong number of elements found for {$property_string}: {$property_count}");
+            throw new \Exception("Wrong number of elements found for {$property_string}: {$property_count}");
         }
     }
 
@@ -635,7 +636,7 @@ class DrupalServiceAPIContext extends DrupalContext
         if ($properties_serial != $parameters_serial) {
             $this->printDebug($properties_serial);
             $this->printDebug($parameters_serial);
-            throw new Exception("Recursive keys or values do not match");
+            throw new \Exception("Recursive keys or values do not match");
         }
     }
 
