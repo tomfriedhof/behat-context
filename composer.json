@@ -10,5 +10,8 @@
         "psr-0": {
             "ActiveLAMP\\BehatContext": "src/"
         }
+    },
+    "require": {
+        "drupal/drupal-extension": "*"
     }
 }
