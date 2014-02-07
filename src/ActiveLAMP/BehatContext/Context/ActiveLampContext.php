@@ -11,13 +11,10 @@ use Behat\Behat\Context\ClosuredContextInterface,
 use Behat\Gherkin\Node\PyStringNode,
     Behat\Gherkin\Node\TableNode;
 use ActiveLAMP\BehatContext\ALFormatter\ActiveLampFormatter;
-use Drupal\DrupalExtension\Context\DrupalContext;
 
 namespace ActiveLAMP\BehatContext\Context;
 
-use Behat\Behat\Context\BehatContext;
-
-class ActiveLampContext extends DrupalContext {
+class ActiveLampContext extends Drupal\DrupalExtension\Context\DrupalContext {
 
     // Parameters contained in the YML file.
     protected $parameters = NULL;
