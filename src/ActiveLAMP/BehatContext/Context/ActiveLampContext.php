@@ -14,7 +14,7 @@ use ActiveLAMP\BehatContext\ALFormatter\ActiveLampFormatter;
 
 namespace ActiveLAMP\BehatContext\Context;
 
-class ActiveLampContext extends Drupal\DrupalExtension\Context\DrupalContext {
+class ActiveLampContext extends \Drupal\DrupalExtension\Context\DrupalContext {
 
     // Parameters contained in the YML file.
     protected $parameters = NULL;
